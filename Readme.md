@@ -15,7 +15,18 @@ insecure and incomplete. you can learn the basic operation of the blockchain thr
 How to run
 ------
 
+
+
 ## Build
+
+Install deps:
+
+
+```shell script
+go mod tidy
+```
+
+build it:
 
 ```shell script
 go build ./cmd/cli
