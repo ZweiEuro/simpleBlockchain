@@ -25,7 +25,7 @@ var (
 		Action: func(c *cli.Context) error {
 			// check if peerNodeAddressFlag is just a number (port)
 			// if so, prepend "localhost:" to it
-			peerNodeAddress := c.String("partnerNodeAddress")
+			peerNodeAddress := c.String("peernodeaddress")
 			if _, err := strconv.Atoi(peerNodeAddress); err == nil {
 				peerNodeAddress = "localhost:" + peerNodeAddress
 			}

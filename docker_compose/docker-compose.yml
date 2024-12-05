@@ -10,7 +10,7 @@ services:
         volumes:
         - ./blockchain_alice/:/app/simpleBlockchain/blockchain/
         - ./existingWallets/wallet_alice:/app/simpleBlockchain/wallet_alice
-        command: ./cli server start -nodeport 3000 -peernodeaddressflag blockchain_bob:7091 -walletname alice -ismining=true
+        command: ./cli server start -nodeport 3000 -peernodeaddress blockchain_bob:7091 -walletname alice -ismining=true
     blockchain_bob:
         build:
             context: ./
@@ -22,4 +22,4 @@ services:
         volumes:
         - ./blockchain_bob/:/app/simpleBlockchain/blockchain/
         - ./existingWallets/wallet_bank:/app/simpleBlockchain/wallet_bank
-        command: ./cli server start -nodeport 3000 -peernodeaddressflag blockchain_bob:7090 -walletname bank
+        command: ./cli server start -nodeport 3000 -peernodeaddress blockchain_bob:7090 -walletname bank
