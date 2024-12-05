@@ -6,10 +6,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/boltdb/bolt"
 	"log"
 	"math/big"
+	"os"
 	"sync"
+
+	"github.com/boltdb/bolt"
 )
 
 var genesisBlock = &Block{
@@ -70,9 +72,9 @@ var genesisBlock = &Block{
 	},
 }
 
+var dbFolderName = "blockchain"
 
-
-var dbSigName = "simpleBlockchain_%d.db"
+var dbSigName = dbFolderName + "/simpleBlockchain_%d.db"
 
 type BlockChain struct {
 	db *bolt.DB
@@ -128,6 +130,17 @@ func NewBlockChain(address string, port int, isMining bool) *BlockChain {
 
 func CreateBlockChain(address string, port int, isMining bool) *BlockChain {
 	dbName := fmt.Sprintf(dbSigName, port)
+
+	// create the folder if it does not exist
+	stat, err := os.Stat(dbFolderName)
+
+	if err != nil ||  stat == nil || stat.IsDir() == false {
+		err := os.Mkdir(dbFolderName, 0755)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	db, err := bolt.Open(dbName, 0600, nil)
 	if err != nil {
 		panic(err)
