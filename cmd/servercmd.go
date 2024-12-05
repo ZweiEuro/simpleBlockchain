@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/tn606024/simpleBlockchain"
 	"github.com/urfave/cli/v2"
-	"os"
 )
 
 var (
@@ -12,19 +14,27 @@ var (
 		Name:		 "start",
 		Usage: 		 "start blockchain server",
 		Description: "start blockchain server",
-		ArgsUsage: 	 "<nodeport><apiport><walletname><ismining>",
+		ArgsUsage: 	 "<nodeport> <peernodeaddressflag> <walletname> <apiport = 8080>  <ismining = false>",
 		Flags: []cli.Flag{
 			nodeportFlag,
+			peernodeaddressflag,
 			apiportFlag,
 			walletnameFlag,
 			isminingFlag,
 		},
 		Action: func(c *cli.Context) error {
+			// check if peerNodeAddressFlag is just a number (port)
+			// if so, prepend "localhost:" to it
+			peerNodeAddress := c.String("partnerNodeAddress")
+			if _, err := strconv.Atoi(peerNodeAddress); err == nil {
+				peerNodeAddress = "localhost:" + peerNodeAddress
+			}
+
 			nodeport := c.Int("nodeport")
 			apiport :=  c.Int("apiport")
 			walletname := c.String("walletname")
 			ismining := c.Bool("ismining")
-			server := simpleBlockchain.NewServer(nodeport, apiport, walletname, ismining)
+			server := simpleBlockchain.NewServer(nodeport, peerNodeAddress, apiport, walletname, ismining)
 			server.StartServer()
 			return nil
 		},

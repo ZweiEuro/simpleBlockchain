@@ -1,2 +1,4 @@
 build/
 go.sum
+wallet_*
+simpleBlockchain_*.db

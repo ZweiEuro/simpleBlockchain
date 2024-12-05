@@ -2,20 +2,21 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "go",
-			"label": "go: build package",
-			"command": "build",
-			"args": [
-				"-o",
-				"build/${fileBasenameNoExtension}"
-			],
+			"type": "shell",
+			"label": "build",
+			"command": "go build cmd/cli/main.go && mkdir -p build && mv main build/main",
 			"problemMatcher": [
 				"$go"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
-			"group": "build"
+			"group": "build",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"close": true
+			}
 		}
 	]
 }

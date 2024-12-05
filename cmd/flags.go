@@ -5,10 +5,15 @@ import (
 )
 
 var (
+	peernodeaddressflag = &cli.StringFlag{
+		Name:	"partnerNodeAddress",
+		Usage:	"partner node address, either addr:port or just port",
+		Required: true,
+	}
 	nodeportFlag = &cli.IntFlag{
 		Name:	"nodeport",
-		Usage:	"nodeport",
-		Value:	3000,
+		Usage:	"nodeport always runs on localhost, the node which your partner has uses as 'peer'",
+		Required:	true,
 	}
 	apiportFlag = &cli.IntFlag{
 		Name:	"apiport",
@@ -31,7 +36,7 @@ var (
 	isminingFlag = &cli.BoolFlag{
 		Name:	"ismining",
 		Usage:  "ismining",
-		Required: true,
+		Value: false,
 	}
 	toFlag = &cli.StringFlag{
 		Name:	"to",

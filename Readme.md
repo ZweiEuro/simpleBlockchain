@@ -1,5 +1,4 @@
-Simple Blockchain
-------
+# Simple Blockchain
 
 This repository contains the golang code of a simple blockchain implementation.
   
@@ -12,9 +11,20 @@ There are many part are not like real blockchain because it's just simple implem
 insecure and incomplete. you can learn the basic operation of the blockchain through this project.
 
 
-How to run
-------
+# Notes:
 
+- This only supports two nodes.
+
+
+## changes from zweieuro (author):
+- The peers were saved in an array, but there are only ever 2
+  - reduced to a single string, making management easier
+  - removed file that wrote the peers down, no reason to have this in this case
+- Make the peers' address respect port or address, resolve THAT address
+  - Same functionality with non is given as before, localhost works as expected
+
+
+# How to run
 
 
 ## Build

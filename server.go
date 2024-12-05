@@ -1,7 +1,6 @@
 package simpleBlockchain
 
 import (
-	"github.com/gin-gonic/gin"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 	"net"
 	"net/http"
 	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -17,12 +18,9 @@ const (
 	protocal = "tcp"
 )
 
-var KnownNodes = []string{
-	"localhost:3000",
-	"localhost:3001",
-}
-
 var knownNodeName = "knownnodes_%d.txt"
+
+var knnownAddrFileName = "knownAddresses.txt"
 
 type MessageHeader string
 
@@ -145,7 +143,7 @@ type Server struct {
 	utxos		[]*UTXO
 	nodeport    int
 	apiport		int
-	knownNodes	[]string
+	peerNodeAddress	string
 	connectMap	map[string]bool
 	blockMap	map[string]int
 	blockchain	*BlockChain
@@ -155,80 +153,34 @@ type Server struct {
 
 
 
-func NewServer(nodeport int,  apiport int,  walletName string, isMining bool) *Server{
-	node := fmt.Sprintf("localhost:%d",nodeport)
+func NewServer(nodeport int, peerNodeAddress string,  apiport int,  walletName string, isMining bool) *Server{
 	wallet, err := GetExistWallet(walletName)
-	addrs, _:=wallet.getAddresses()
+	if err != nil {
+		panic(err)
+	}
+	
+	addrs, _ := wallet.getAddresses()
 	blockchain := NewBlockChain(addrs[0],nodeport, isMining)
-	if err != nil {
-		panic(err)
-	}
-	knownNodes, err := NewKnownNodes(nodeport)
-	if err != nil {
-		panic(err)
-	}
+
+	var nodeAddress = fmt.Sprintf("localhost:%d", nodeport)
+
 	connectMap := make(map[string]bool,0)
 	blockMap := make(map[string]int,0)
 	utxos := make([]*UTXO,0)
 	s:=  &Server{
-		node: node,
+		node: nodeAddress,
 		wallet: wallet,
 		utxos: utxos,
 		nodeport: nodeport,
 		apiport: apiport,
-		knownNodes: knownNodes,
+		peerNodeAddress: peerNodeAddress,
 		blockchain: blockchain,
 		connectMap: connectMap,
 		blockMap: blockMap,
 	}
+
 	s.ScanWalletUTXOs()
 	return s
-}
-
-func NewKnownNodes(port int) ([]string, error){
-	var knownNodes []string
-	nodefile := fmt.Sprintf(knownNodeName,port)
-	if IsFileExists(nodefile) == false {
-		bkn, _ := json.Marshal(KnownNodes)
-		err := ioutil.WriteFile(nodefile, bkn, 0644)
-		if err != nil{
-			return nil, err
-		}
-	}
-	b, err := ioutil.ReadFile(fmt.Sprintf(knownNodeName,port))
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(b, &knownNodes)
-	if err != nil {
-		return nil, err
-	}
-	return knownNodes, nil
-}
-
-func (s *Server) AddKnownNode(knownNode string) error{
-	s.mutex.Lock()
-	s.knownNodes = append(s.knownNodes, knownNode)
-	bkn, _ := json.Marshal(s.knownNodes)
-	s.mutex.Unlock()
-	nodefile := fmt.Sprintf(knownNodeName, s.nodeport)
-	err := ioutil.WriteFile(nodefile, bkn, 0644)
-	if err != nil {
-		return  err
-	}
-	return nil
-}
-
-func (s *Server) SearchKnownNode(knownNode string) bool {
-	s.mutex.Lock()
-	for _, node := range s.knownNodes{
-		if node == knownNode{
-			s.mutex.Unlock()
-			return true
-		}
-	}
-	s.mutex.Unlock()
-	return false
 }
 
 func (s *Server) StartServer() {
@@ -436,28 +388,16 @@ func (s *Server) MiningEmptyBlockAndBroadcast() (*Block,error) {
 	return blk, nil
 }
 func (s *Server) broadcastVersion(){
-	for _, knownNode := range s.knownNodes {
-		if knownNode != s.node {
-			s.sendVersion(knownNode)
-		}
-	}
+	s.sendVersion(s.peerNodeAddress)
 }
 
 func (s *Server) broadcastBlock(block *Block){
-	for _, knownNode := range s.knownNodes{
-		if knownNode != s.node {
-			s.sendBlock(knownNode, []*Block{block})
-		}
-	}
+	s.sendBlock(s.peerNodeAddress, []*Block{block})
 }
 
 
 func (s *Server) broadcastTx(tx *Transaction){
-	for _, knownNode := range s.knownNodes{
-		if knownNode != s.node {
-			s.sendTx(knownNode, tx)
-		}
-	}
+	s.sendTx(s.peerNodeAddress, tx)
 }
 
 
@@ -498,9 +438,6 @@ func (s *Server) handleVersion(payload json.RawMessage){
 	}
 	logHandleMsg(VersionMsgHeader, &versionMsg)
 	if versionMsg.Version == blockchainVersion {
-		if !s.SearchKnownNode(versionMsg.AddrFrom) {
-			s.AddKnownNode(versionMsg.AddrFrom)
-		}
 		s.mutex.Lock()
 		s.blockMap[versionMsg.AddrFrom] = versionMsg.StartHeight
 		conn, ok := s.connectMap[versionMsg.AddrFrom]
@@ -712,12 +649,7 @@ func (s *Server) handleTx(payload json.RawMessage) {
 		Type: "block",
 		Hash: []Hashes{blk.newHash()},
 	}
-	for _, knownNode := range s.knownNodes {
-		if knownNode != s.node {
-			s.sendInv(knownNode, &invMsg)
-		}
-	}
-
+	s.sendInv(s.peerNodeAddress, &invMsg)
 }
 
 func (s *Server) sendVersion(addr string){
@@ -844,7 +776,7 @@ func (s *Server) send(addr string, data []byte) error{
 		delete(s.blockMap, addr)
 		delete(s.connectMap, addr)
 		//s.deleteKnownNodes(addr)
-		return fmt.Errorf("%s is not online \n", addr)
+		return fmt.Errorf("%s is not online ", addr)
 	}
 	defer conn.Close()
 	_, err = io.Copy(conn, bytes.NewReader(data))
