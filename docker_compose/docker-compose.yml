@@ -1,0 +1,29 @@
+services:
+    blockchain_alice:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+        container_name: blockchain_alice
+        ports: # redirect ports to some starting with 70
+            - "7090:3000" # nodeport
+            - "7080:8080" # apiport 
+        volumes:
+        - ./simpleBlockchain_alice.db:/app/simpleBlockchain/simpleBlockchain_3000.db
+        - ./existingWallets/wallet_alice:/app/simpleBlockchain/wallet_alice
+        command: ./cli server start -nodeport 3000 -peernodeaddressflag blockchain_bob:7091 -walletname alice -ismining=true
+    blockchain_bob:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+        container_name: blockchain_bob
+        ports: # redirect ports to some starting with 70
+        - "7091:3000" # nodeport 
+        - "7081:8080" # apiport
+        volumes:
+        - ./simpleBlockchain_bank.db:/app/simpleBlockchain/simpleBlockchain_3000.db
+        - ./existingWallets/wallet_bank:/app/simpleBlockchain/wallet_bank
+        command: ./cli server start -nodeport 3000 -peernodeaddressflag blockchain_bob:7090 -walletname bank
+
+    # Alice also lives on our server,
+    # This is rather unrealistic since that means that the servers docker composer is doing
+    # the mining as well, but it makes it very portable

@@ -6,7 +6,7 @@ import (
 
 var (
 	peernodeaddressflag = &cli.StringFlag{
-		Name:	"partnerNodeAddress",
+		Name:	"peernodeaddressflag",
 		Usage:	"partner node address, either addr:port or just port",
 		Required: true,
 	}
