@@ -5,15 +5,15 @@ import (
 )
 
 var (
-	peernodeaddressflag = &cli.StringFlag{
+	peernodeaddressFlag = &cli.StringFlag{
 		Name:	"peernodeaddress",
 		Usage:	"partner node address, either addr:port or just port",
 		Required: true,
 	}
-	nodeportFlag = &cli.IntFlag{
-		Name:	"nodeport",
-		Usage:	"nodeport always runs on localhost, the node which your partner has uses as 'peer'",
-		Required:	true,
+	nodeaddressFlag = &cli.StringFlag{
+		Name:	"nodeaddress",
+		Usage:	"what address is this node reachable under, addr:port or port (localhost)",
+		Required: true,
 	}
 	apiportFlag = &cli.IntFlag{
 		Name:	"apiport",

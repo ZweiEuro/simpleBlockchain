@@ -14,10 +14,10 @@ var (
 		Name:		 "start",
 		Usage: 		 "start blockchain server",
 		Description: "start blockchain server",
-		ArgsUsage: 	 "<nodeport> <peernodeaddressflag> <walletname> <apiport = 8080>  <ismining = false>",
+		ArgsUsage: 	 "<nodeaddress> <peernodeaddressflag> <walletname> <apiport = 8080>  <ismining = false>",
 		Flags: []cli.Flag{
-			nodeportFlag,
-			peernodeaddressflag,
+			nodeaddressFlag,
+			peernodeaddressFlag,
 			apiportFlag,
 			walletnameFlag,
 			isminingFlag,
@@ -30,11 +30,16 @@ var (
 				peerNodeAddress = "localhost:" + peerNodeAddress
 			}
 
-			nodeport := c.Int("nodeport")
+			nodeaddress := c.String("nodeaddress")
+			if _, err := strconv.Atoi(nodeaddress); err == nil {
+				nodeaddress = "localhost:" + nodeaddress
+			}
+
+
 			apiport :=  c.Int("apiport")
 			walletname := c.String("walletname")
 			ismining := c.Bool("ismining")
-			server := simpleBlockchain.NewServer(nodeport, peerNodeAddress, apiport, walletname, ismining)
+			server := simpleBlockchain.NewServer(nodeaddress, peerNodeAddress, apiport, walletname, ismining)
 			server.StartServer()
 			return nil
 		},

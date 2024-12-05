@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -141,8 +143,8 @@ type Server struct {
 	node 		string
 	wallet		*Wallet
 	utxos		[]*UTXO
-	nodeport    int
 	apiport		int
+	nodeaddress string
 	peerNodeAddress	string
 	connectMap	map[string]bool
 	blockMap	map[string]int
@@ -153,27 +155,43 @@ type Server struct {
 
 
 
-func NewServer(nodeport int, peerNodeAddress string,  apiport int,  walletName string, isMining bool) *Server{
+func NewServer(nodeaddress string, peernodeaddress string,  apiport int,  walletName string, isMining bool) *Server{
 	wallet, err := GetExistWallet(walletName)
 	if err != nil {
 		panic(err)
 	}
 	
 	addrs, _ := wallet.getAddresses()
-	blockchain := NewBlockChain(addrs[0],nodeport, isMining)
 
-	var nodeAddress = fmt.Sprintf("localhost:%d", nodeport)
+	parts := strings.Split(nodeaddress, ":");
+	portNumber := 0
+	if len(parts) == 1 {
+		// convert the port to a number
+		portNumber, err = strconv.Atoi(parts[0])
+		if err != nil {
+			panic(err)
+		}
+
+	}else{
+		portNumber, err = strconv.Atoi(parts[1])
+		if err != nil {
+			panic(err)
+		}
+	}
+
+
+	blockchain := NewBlockChain(addrs[0], portNumber, isMining)
 
 	connectMap := make(map[string]bool,0)
 	blockMap := make(map[string]int,0)
 	utxos := make([]*UTXO,0)
 	s:=  &Server{
-		node: nodeAddress,
+		node: nodeaddress,
 		wallet: wallet,
 		utxos: utxos,
-		nodeport: nodeport,
+		nodeaddress: nodeaddress,
 		apiport: apiport,
-		peerNodeAddress: peerNodeAddress,
+		peerNodeAddress: peernodeaddress,
 		blockchain: blockchain,
 		connectMap: connectMap,
 		blockMap: blockMap,
